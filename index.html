@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rural Settlement Patterns — APHG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+
+<!-- ArcGIS Maps SDK for JavaScript (map components + core API, one tag) -->
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<!-- Optional ArcGIS API key lives in arcgis-config.js -->
+<script type="module" src="arcgis-config.js"></script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <nav aria-label="Sections">
+      <a href="#explore">Real places</a>
+      <a href="#model">The model</a>
+      <a href="#compare">Compare</a>
+      <a href="#survey">Survey systems</a>
+      <a href="#spot">Spot the pattern</a>
+      <a href="#check">Check yourself</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>Where do farmers put their houses?</h1>
+    <p class="lede">A <strong>rural settlement</strong> is a place where most people make a living from the land — farming, herding, fishing, forestry. Its population is small and spread thin, and the houses are arranged in one of three recognizable ways. This page uses live ArcGIS imagery so you can see each pattern on the real landscape, then practice spotting it.</p>
+  </div>
+
+  <!-- REAL PLACES -->
+  <section id="explore">
+    <div class="intro">
+      <h2>See it from above</h2>
+      <p>Pick a pattern, then a place. The map flies there on ArcGIS World Imagery. Zoom in and out — the pattern often jumps out at one scale and disappears at another.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Settlement pattern">
+      <button class="tab" role="tab" data-pattern="clustered" aria-selected="true">Clustered</button>
+      <button class="tab" role="tab" data-pattern="dispersed" aria-selected="false">Dispersed</button>
+      <button class="tab" role="tab" data-pattern="linear" aria-selected="false">Linear</button>
+    </div>
+    <div class="chips" id="place-chips"></div>
+    <div class="sim">
+      <div class="stack">
+        <div class="map">
+          <arcgis-map id="explore-map" basemap="hybrid" center="-2.2286,51.4935" zoom="15">
+            <arcgis-zoom position="top-left"></arcgis-zoom>
+            <arcgis-scale-bar position="bottom-left" unit="dual"></arcgis-scale-bar>
+            <arcgis-basemap-toggle position="bottom-right" next-basemap="topo-vector"></arcgis-basemap-toggle>
+          </arcgis-map>
+        </div>
+        <p class="place-note" id="place-note"></p>
+      </div>
+      <aside class="card" id="pattern-card" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <!-- THE MODEL -->
+  <section id="model">
+    <div class="intro">
+      <h2>The idealized model</h2>
+      <p>Real landscapes are messy. Here are the same fourteen farmhouses and one river, rearranged the textbook way, with the fields and survey lines that usually come with each pattern.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Model pattern">
+      <button class="tab" role="tab" data-mode="clustered" aria-selected="true">Clustered</button>
+      <button class="tab" role="tab" data-mode="dispersed" aria-selected="false">Dispersed</button>
+      <button class="tab" role="tab" data-mode="linear" aria-selected="false">Linear</button>
+    </div>
+    <div class="scene">
+      <svg id="landscape" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="landscape-title">
+        <title id="landscape-title">Landscape showing the selected rural settlement pattern</title>
+        <defs>
+          <pattern id="stripes" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">
+            <rect width="14" height="14" fill="var(--field-b)"/>
+            <rect width="7" height="14" fill="var(--field-a)"/>
+          </pattern>
+          <pattern id="stripes-h" width="14" height="14" patternUnits="userSpaceOnUse">
+            <rect width="14" height="14" fill="var(--field-c)"/>
+            <rect width="14" height="7" fill="var(--field-b)"/>
+          </pattern>
+        </defs>
+        <rect width="800" height="400" fill="var(--field-c)"/>
+        <g id="layer-clustered" class="layer on"></g>
+        <g id="layer-dispersed" class="layer"></g>
+        <g id="layer-linear" class="layer"></g>
+        <path id="river" fill="none" stroke="var(--river)" stroke-width="16" stroke-linecap="round"/>
+        <g id="trees"></g>
+        <g id="houses"></g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section id="compare">
+    <div class="intro">
+      <h2>Side by side</h2>
+      <p>The pattern is the "what." An APHG answer also needs the "why" and the "where."</p>
+    </div>
+    <div class="table-scroll">
+    <table class="compare">
+      <thead>
+        <tr><th scope="col"></th><th scope="col">Clustered (nucleated)</th><th scope="col">Dispersed</th><th scope="col">Linear</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">What it looks like</th>
+          <td>Houses, barns, church, and shops grouped tightly in a village; farmland surrounds the village.</td>
+          <td>Each farm family lives on its own land, isolated from neighbors; houses spread evenly across the landscape.</td>
+          <td>Houses form a line along a road, river, canal, or coastline; fields stretch back from the line.</td></tr>
+        <tr><th scope="row">Why it forms</th>
+          <td>Defense, shared wells and pastures, social and religious life, communal or feudal land tenure (open-field system), scarce farmland.</td>
+          <td>Abundant land, private ownership, large mechanized farms, the enclosure movement, government surveys that handed out rectangular plots.</td>
+          <td>Everyone wants frontage on the transport route or water source; long-lot surveys give each farm a narrow strip touching it.</td></tr>
+        <tr><th scope="row">Where you see it</th>
+          <td>Medieval European villages, New England colonial towns, much of rural Asia and Africa, Spanish colonial plaza towns.</td>
+          <td>U.S. Midwest and Great Plains, rural Canada, Australia, Britain after enclosure.</td>
+          <td>Québec along the St. Lawrence, Louisiana bayous, the Texas Rio Grande, German Strassendorf road villages.</td></tr>
+        <tr><th scope="row">Survey system link</th>
+          <td>Open-field strips around the village; metes and bounds in irregular terrain.</td>
+          <td>Township and range (Public Land Survey System): square sections, one farmstead per plot.</td>
+          <td>French long-lot: narrow, deep parcels perpendicular to a river or road.</td></tr>
+        <tr><th scope="row">Sub-forms</th>
+          <td>Circular (German Rundling, southern African kraal), grid (New England, colonial Spanish).</td>
+          <td>—</td>
+          <td>River-front, road-front, coastal.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- SURVEY SYSTEMS -->
+  <section id="survey">
+    <div class="intro">
+      <h2>How the land was divided</h2>
+      <p>Settlement patterns often come from the survey system that drew the property lines. Each tab flies the map to a real place where that system is written on the land, with a diagram of how it works underneath.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Survey system">
+      <button class="tab" role="tab" data-survey="metes" aria-selected="true">Metes and bounds</button>
+      <button class="tab" role="tab" data-survey="township" aria-selected="false">Township and range</button>
+      <button class="tab" role="tab" data-survey="longlot" aria-selected="false">Long-lot</button>
+    </div>
+    <div class="sim">
+      <div class="stack">
+        <div class="map">
+          <arcgis-map id="survey-map" basemap="hybrid" center="-83.05,39.36" zoom="11">
+            <arcgis-zoom position="top-left"></arcgis-zoom>
+            <arcgis-scale-bar position="bottom-left" unit="dual"></arcgis-scale-bar>
+            <arcgis-basemap-toggle position="bottom-right" next-basemap="topo-vector"></arcgis-basemap-toggle>
+          </arcgis-map>
+        </div>
+        <p class="place-note" id="survey-note"></p>
+        <div class="model-label">Diagram</div>
+        <div class="scene">
+          <svg id="survey-scene" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of the selected land survey system">
+            <rect width="800" height="400" fill="var(--field-c)"/>
+            <g id="survey-metes" class="layer on"></g>
+            <g id="survey-township" class="layer"></g>
+            <g id="survey-longlot" class="layer"></g>
+          </svg>
+        </div>
+      </div>
+      <aside class="card" id="survey-card" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <!-- SPOT THE PATTERN -->
+  <section id="spot">
+    <div class="intro">
+      <h2>Spot the pattern</h2>
+      <p>Eight real places on satellite imagery, no labels. Decide which pattern you're looking at. Zooming is allowed — that's part of the skill.</p>
+    </div>
+    <div class="game">
+      <div class="map game-map">
+        <arcgis-map id="game-map" basemap="satellite" center="-93.40,42.05" zoom="13">
+          <arcgis-zoom position="top-left"></arcgis-zoom>
+          <arcgis-scale-bar position="bottom-left" unit="dual"></arcgis-scale-bar>
+        </arcgis-map>
+      </div>
+      <div class="card">
+        <div class="score" id="g-score">Round 1 of 8</div>
+        <h3>Which pattern is this?</h3>
+        <div class="choices" id="g-choices">
+          <button class="choice" data-answer="clustered">Clustered</button>
+          <button class="choice" data-answer="dispersed">Dispersed</button>
+          <button class="choice" data-answer="linear">Linear</button>
+        </div>
+        <div class="feedback" id="g-feedback" aria-live="polite"></div>
+        <button class="btn" id="g-next" disabled>Next place</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECK YOURSELF -->
+  <section id="check">
+    <div class="intro">
+      <h2>Check yourself</h2>
+      <p>Multiple choice first, then four free-response prompts written the way the exam asks them.</p>
+    </div>
+    <div id="quiz"></div>
+    <p class="score" id="quiz-score"></p>
+    <button class="btn quiet" id="quiz-reset">Clear answers</button>
+
+    <h3 style="margin-top:2.5rem">Free-response practice</h3>
+    <p style="color:var(--ink-soft)">Write your answer first, then open the sample. On the exam, "describe" means give a full sentence with a specific detail, not just a label.</p>
+    <div class="frq">
+      <details>
+        <summary>Prompt A · Clustered</summary>
+        <p class="prompt">Describe ONE reason clustered rural settlements were common in medieval Europe.</p>
+        <p class="sample">Sample: Under the feudal open-field system, peasants farmed strips scattered across large shared fields and needed to live close together to share plows, draft animals, and the village common. Living in a nucleated village also made it easier to defend against raiders and to reach the church and market.</p>
+      </details>
+      <details>
+        <summary>Prompt B · Dispersed</summary>
+        <p class="prompt">Explain how the township-and-range survey system contributed to a dispersed settlement pattern in the United States.</p>
+        <p class="sample">Sample: The Public Land Survey System divided the Midwest into one-square-mile sections and sold or granted them as 160-acre quarter sections to individual families. Because each family received its own large, rectangular plot, farmers built their houses on their own land rather than in a village, producing isolated farmsteads spread evenly across the landscape.</p>
+      </details>
+      <details>
+        <summary>Prompt C · Linear</summary>
+        <p class="prompt">Identify the survey system associated with the linear settlement pattern along the St. Lawrence River and describe how it shaped the landscape.</p>
+        <p class="sample">Sample: The French long-lot system. Each farm was a narrow strip running back from the river so that every family had access to the water for transportation, fishing, and irrigation. Houses were built at the river end of each lot, so from the air the settlement appears as a line of houses along the bank with long fields stretching behind them.</p>
+      </details>
+      <details>
+        <summary>Prompt D · Survey systems</summary>
+        <p class="prompt">Compare the metes-and-bounds and township-and-range survey systems, and explain how each influenced the rural settlement pattern of the region where it was used.</p>
+        <p class="sample">Sample: Metes and bounds describes property using natural landmarks such as trees, streams, and boulders along with distances and compass directions, producing irregular parcels of many sizes; it was used in the original thirteen colonies, where settlement followed the terrain and was often clustered in villages or scattered unevenly along creeks. Township and range, created by the Land Ordinance of 1785, imposed a grid of six-mile-square townships divided into one-square-mile sections regardless of terrain; because families received their own square quarter sections, they built isolated farmsteads, giving the Midwest and Great Plains a dispersed pattern with roads running along the section lines.</p>
+      </details>
+    </div>
+
+    <div class="teacher">
+      <h3>Take it into ArcGIS Online</h3>
+      <ol>
+        <li>Every place on this page has an "Open in ArcGIS Online" link. It opens Map Viewer at the same spot on World Imagery, signed in to your school account.</li>
+        <li>Have students add a sketch layer, draw a box around the settlement, and label it with the pattern and the survey system.</li>
+        <li>Ask them to find one new example of each pattern anywhere on Earth, add a map note explaining the "why," and save the map to share with the class.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <p>Built for AP Human Geography, Unit 5 (Agriculture and Rural Land-Use Patterns). Terms follow the College Board Course and Exam Description. Maps use the ArcGIS Maps SDK for JavaScript and ArcGIS World Imagery.</p>
+    <p>Designed by <a href="https://tbaker.com">Tom Baker</a></p>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
