@@ -86,7 +86,9 @@ const svgNS = "http://www.w3.org/2000/svg";
   };
   const setPattern = (pattern) => {
     currentPattern = pattern;
-    document.querySelectorAll("[data-pattern]").forEach(t => t.setAttribute("aria-selected", t.dataset.pattern === pattern ? "true" : "false"));
+    patternCard.dataset.pattern = pattern;
+    document.getElementById("explore").dataset.pattern = pattern;
+    document.querySelectorAll(".tab[data-pattern]").forEach(t => t.setAttribute("aria-selected", t.dataset.pattern === pattern ? "true" : "false"));
     chips.innerHTML = "";
     PLACES[pattern].forEach(([name], i) => {
       const b = document.createElement("button");
@@ -111,7 +113,7 @@ const svgNS = "http://www.w3.org/2000/svg";
     }[pattern];
     showPlace(pattern, 0);
   };
-  document.querySelectorAll("[data-pattern]").forEach(t => t.addEventListener("click", () => setPattern(t.dataset.pattern)));
+  document.querySelectorAll(".tab[data-pattern]").forEach(t => t.addEventListener("click", () => setPattern(t.dataset.pattern)));
   setPattern("clustered");
 
 /* ---------- EXPLORE: the simulator ---------- */
@@ -349,7 +351,31 @@ const svgNS = "http://www.w3.org/2000/svg";
   const gFeedback = document.getElementById("g-feedback");
   const gNext = document.getElementById("g-next");
   const choiceBtns = Array.from(document.querySelectorAll("#g-choices .choice"));
-  let deck = [], round = 0, score = 0, current = null;
+  let deck = [], round = 0, score = 0, current = null, streak = 0;
+  const gStreak = document.getElementById("g-streak");
+  const gProgress = document.getElementById("g-progress");
+  const GOOD = ["Nailed it.", "Correct.", "Sharp eyes.", "Yep.", "Geographer moment.", "Correct — easy for you."];
+  const OOPS = ["Close, but no.", "Not that one.", "Tricky one.", "Nope."];
+  const updateStreak = () => {
+    gStreak.textContent = streak >= 2 ? `🔥 ${streak} in a row` : "";
+    gStreak.classList.toggle("on", streak >= 2);
+  };
+  const confetti = () => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const box = document.createElement("div"); box.className = "confetti";
+    const colors = ["var(--clustered)", "var(--dispersed)", "var(--linear)", "var(--pop)", "var(--gold)"];
+    for (let i = 0; i < 90; i++) {
+      const p = document.createElement("i");
+      p.style.left = Math.random() * 100 + "vw";
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty("--t", 1.8 + Math.random() * 1.6 + "s");
+      p.style.setProperty("--d", Math.random() * 0.8 + "s");
+      p.style.transform = `rotate(${Math.random() * 360}deg)`;
+      box.appendChild(p);
+    }
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 3800);
+  };
 
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const newDeck = () => {
@@ -365,6 +391,7 @@ const svgNS = "http://www.w3.org/2000/svg";
     current = deck[round - 1];
     flyTo(gameMap, current.lon, current.lat, current.zoom);
     gScore.textContent = `Round ${round} of ${ROUNDS} · Score ${score}`;
+    gProgress.style.width = ((round - 1) / ROUNDS * 100) + "%";
     gFeedback.textContent = ""; gFeedback.className = "feedback";
     choiceBtns.forEach(b => { b.disabled = false; b.className = "choice"; });
     gNext.disabled = true;
@@ -374,20 +401,32 @@ const svgNS = "http://www.w3.org/2000/svg";
     const ans = b.dataset.answer;
     choiceBtns.forEach(x => { x.disabled = true; if (x.dataset.answer === current.p) x.classList.add("correct"); });
     const reveal = `<em>${current.name}.</em> ${current.note} <a class="agol" href="${agolLink(current.lon, current.lat, current.zoom)}" target="_blank" rel="noopener">Open in ArcGIS Online</a>`;
-    if (ans === current.p) { score++; gFeedback.className = "feedback good"; gFeedback.innerHTML = `<strong>Correct.</strong> ${reveal}`; }
-    else { b.classList.add("wrong"); gFeedback.className = "feedback poor"; gFeedback.innerHTML = `<strong>Not this one — it's ${LABEL[current.p].toLowerCase()}.</strong> ${reveal}`; }
+    if (ans === current.p) {
+      score++; streak++;
+      gFeedback.className = "feedback good";
+      gFeedback.innerHTML = `<strong>${GOOD[Math.floor(Math.random() * GOOD.length)]}</strong> ${reveal}`;
+    } else {
+      streak = 0;
+      b.classList.add("wrong"); gFeedback.className = "feedback poor";
+      gFeedback.innerHTML = `<strong>${OOPS[Math.floor(Math.random() * OOPS.length)]} It's ${LABEL[current.p].toLowerCase()}.</strong> ${reveal}`;
+    }
+    updateStreak();
     gScore.textContent = `Round ${round} of ${ROUNDS} · Score ${score}`;
+    gProgress.style.width = (round / ROUNDS * 100) + "%";
     gNext.disabled = false;
   }));
   gNext.addEventListener("click", () => {
     if (round >= ROUNDS) {
       gScore.textContent = `Finished · ${score} of ${ROUNDS}`;
-      const msg = score === ROUNDS ? "Every one. You can read a settlement pattern straight off the imagery."
-        : score >= 6 ? "Solid. For the ones you missed, zoom out one level — the spacing between houses is the giveaway."
-        : "Keep going. Ask of every place: are the houses grouped, spread, or in a line?";
-      gFeedback.className = "feedback"; gFeedback.innerHTML = `<strong>${msg}</strong>`;
+      const rank = score === ROUNDS ? ["🛰️", "Satellite Whisperer", "Every one. You can read a settlement pattern straight off the imagery."]
+        : score >= 6 ? ["🧭", "Field Scout", "Solid. For the ones you missed, zoom out one level — the spacing between houses is the giveaway."]
+        : score >= 4 ? ["🗺️", "Map Apprentice", "Getting there. Ask of every place: are the houses grouped, spread, or in a line?"]
+        : ["🌱", "Rookie Surveyor", "Everyone starts here. Run it again — the patterns get obvious fast."];
+      gFeedback.className = "feedback";
+      gFeedback.innerHTML = `<div class="rank"><span class="big">${rank[0]}</span>${rank[1]}</div>${rank[2]}`;
+      if (score === ROUNDS) confetti();
       gNext.textContent = "Play again";
-      gNext.onclick = () => { round = 0; score = 0; gNext.onclick = null; newDeck(); newRound(); };
+      gNext.onclick = () => { round = 0; score = 0; streak = 0; updateStreak(); gNext.onclick = null; newDeck(); newRound(); };
       return;
     }
     newRound();
@@ -437,7 +476,7 @@ const svgNS = "http://www.w3.org/2000/svg";
     quizEl.innerHTML = "";
     QUIZ.forEach((q, i) => {
       const d = document.createElement("div"); d.className = "q";
-      d.innerHTML = `<p class="stem">${i + 1}. ${q.stem}</p>
+      d.innerHTML = `<p class="stem">${q.stem}</p>
         <div class="choices">${q.options.map((o, j) => `<button class="choice" data-q="${i}" data-j="${j}">${o}</button>`).join("")}</div>
         <p class="explain">${q.explain}</p>`;
       quizEl.appendChild(d);
@@ -453,7 +492,14 @@ const svgNS = "http://www.w3.org/2000/svg";
     if (j === q.answer) right++; else b.classList.add("wrong");
     wrap.classList.add("answered");
     answered++;
-    quizScore.textContent = `${right} of ${answered} answered correctly` + (answered === QUIZ.length ? ` · ${right} of ${QUIZ.length} overall` : "");
+    if (answered === QUIZ.length) {
+      const pct = right / QUIZ.length;
+      const tag = pct === 1 ? "🏆 Perfect — go teach the class." : pct >= 0.8 ? "🎯 Exam-ready." : pct >= 0.6 ? "📈 Nearly there — reread the explanations you missed." : "🔁 Clear it and try again; the explanations are the study guide.";
+      quizScore.textContent = `${right} of ${QUIZ.length} · ${tag}`;
+      if (pct === 1) confetti();
+    } else {
+      quizScore.textContent = `${right} of ${answered} answered correctly`;
+    }
   });
   document.getElementById("quiz-reset").addEventListener("click", () => { answered = 0; right = 0; renderQuiz(); });
   renderQuiz();

@@ -31,6 +31,11 @@
   <div class="hero">
     <h1>Where do farmers put their houses?</h1>
     <p class="lede">A <strong>rural settlement</strong> is a place where most people make a living from the land — farming, herding, fishing, forestry. Its population is small and spread thin, and the houses are arranged in one of three recognizable ways. This page uses live ArcGIS imagery so you can see each pattern on the real landscape, then practice spotting it.</p>
+    <div class="stickers" aria-hidden="true">
+      <span class="sticker c"><span class="ico">🏘️</span>Clustered</span>
+      <span class="sticker d"><span class="ico">🌾</span>Dispersed</span>
+      <span class="sticker l"><span class="ico">🛶</span>Linear</span>
+    </div>
   </div>
 
   <!-- REAL PLACES -->
@@ -181,7 +186,11 @@
         </arcgis-map>
       </div>
       <div class="card">
-        <div class="score" id="g-score">Round 1 of 8</div>
+        <div class="scorebar">
+          <div class="score" id="g-score">Round 1 of 8</div>
+          <span class="streak" id="g-streak"></span>
+        </div>
+        <div class="progress"><span id="g-progress"></span></div>
         <h3>Which pattern is this?</h3>
         <div class="choices" id="g-choices">
           <button class="choice" data-answer="clustered">Clustered</button>
